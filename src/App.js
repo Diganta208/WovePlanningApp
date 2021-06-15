@@ -1,24 +1,48 @@
 import logo from './logo.svg';
+import React,{useState, useEffect } from 'react';
 import './App.css';
+import UserLogin from "./component/UserLogin";
+import Dashboard from "./component/Dashboard";
+import WovenPlaningDashboard from "./component/WovenPlaningDashboard";
+import {render} from 'react-dom'
+import { BrowserRouter as Router, Route,Switch} from 'react-router-dom';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
-function App() {
+import Home from './component/Home'
+
+import { useHistory } from 'react-router';
+
+
+
+function App() { 
+
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+  <div >
+    <div> 
     </div>
+    <Router>
+    <Switch>
+      <Route path='/dashboard'>
+        <Dashboard/>
+         </Route>
+    </Switch>
+    <Switch>
+      <Route path='/userlogin'>
+        <UserLogin/>
+         </Route>
+    </Switch>
+    <Switch>
+      <Route path='/wovenplaningdashboard'>
+        <WovenPlaningDashboard/>
+         </Route>
+    </Switch>
+    </Router>
+    
+    
+  </div>
+    
+
   );
 }
 
