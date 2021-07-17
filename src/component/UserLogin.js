@@ -1,7 +1,7 @@
 import React, {useState, useEffect} from 'react'
 import axios from 'axios'
-import { Router, Route, Link, browserHistory,useHistory, IndexRoute } from 'react-router';
-import {Redirect} from 'react-dom';
+import { Router,  Link, browserHistory,useHistory, IndexRoute } from 'react-router';
+import {Route,Redirect} from 'react-router-dom';
 import MediaQuery from 'react-responsive';
 
 
@@ -12,7 +12,7 @@ export const UserLogIn = () => {
     let [email, setEmail] = useState("");
     let [password, setPassword] = useState("");
     let history=useHistory()
-    let [user, setUser]= useState(parseInt(sessionStorage.getItem('empId')))
+    let [user, setUser]= useState(parseInt(localStorage.getItem('empId')))
    // const [newEntry, setNewEntry] = useState([]);
 
     // const LogStyle ={
@@ -42,10 +42,10 @@ export const UserLogIn = () => {
             if(res.data.length>0) 
             {
                
-                sessionStorage.setItem('userId',res.data[0].UserID);
-                sessionStorage.setItem('userName',res.data[0].UserName);
-                sessionStorage.setItem('empId',res.data[0].Emp_ID);
-                sessionStorage.setItem('roleId',res.data[0].RoleID);
+                localStorage.setItem('userId',res.data[0].UserID);
+                localStorage.setItem('userName',res.data[0].UserName);
+                localStorage.setItem('empId',res.data[0].Emp_ID);
+                localStorage.setItem('roleId',res.data[0].RoleID);
                 console.log("working")
 
                 history.push("/dashboard")
@@ -65,8 +65,10 @@ return(
     <div className="body" >
         
             <div className="container">
+                <h3 align="center" className="headerColor">User Log In</h3>
                 <tr>
-                    <td><label className="lebel" htmlFor="email">Email</label></td>
+                    <td><label className="lebel" htmlFor="email">Id</label></td>
+                    <td className="space"></td>
                     <td><input className="input" type="text" name="email" id="email"
                      value={email}
                     onChange={(e) => setEmail(e.target.value) }
@@ -74,12 +76,13 @@ return(
                 </tr>
                 <tr>
                  <td> <label className="lebel" htmlFor="password">Password</label></td>
+                 <td  className="space"></td>
                     <td><input className="input" type="password" name="password" id="password" 
                      value={password}
                      onChange={(e) => setPassword(e.target.value) }
                          /> </td>
                 </tr>
-                <tr><td><button className="button" type="submit" onClick={getdata}>Login</button></td></tr>
+                <tr><td><button className="button btn btn-outline-success" type="submit" onClick={getdata}>Login</button></td></tr>
             </div>
     
 
