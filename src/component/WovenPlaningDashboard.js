@@ -1,15 +1,17 @@
 import React,{useState, useEffect } from 'react';
 import ReactDOM from 'react-dom';
-import { Router, Route, Link, browserHistory,useHistory, IndexRoute } from 'react-router';
-import Select from 'react-select';
+import { Router, Route, Link, browserHistory,useHistory, IndexRoute, Redirect } from 'react-router';
+//import Select from 'react-select';
 import axios from 'axios';
 import reactDom from 'react-dom';
 import Swal from 'sweetalert2';
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import {format} from 'date-fns';
+import Select from 'react-select';
+import 'semantic-ui-css/semantic.min.css';
 
-
+let api='192.168.12.5:3500'
 let Machines=[]
 let plan=[]  
 let data
@@ -30,7 +32,7 @@ let data
     let [sampleId, setSampleId]=useState(0)
     let [cutter, setCutter]=useState("");
     let[info, setInfo]=useState(false);
-    let [userInfo, setUserInfo]=useState(sessionStorage.getItem('empId'));
+    let [userInfo, setUserInfo]=useState(localStorage.getItem('empId'));
     let [plans, setPlans]=useState([]);
     let history=new useHistory();
     let [selectedShed , setSelectedShed]= useState(0);
@@ -41,23 +43,29 @@ let data
     let [selectedPickOpening, setSelectedPickOpening]= useState(0);
     let [selectedPickCloseing, setSelectedPickCloseing]= useState(0);
    
-    let [selectedRepeat, setSelectedRepeat]= useState();
-    let [selectedWarp, setSelectedWarp]= useState();
-    let [selectedWeft, setSelectedWeft]= useState();
-    let [selectedEficiency, setSelectedEficiency]= useState();
-    let [selectedOthers, setSelectedOthers]= useState();
-    let [selectedPower, setSelectedPower]= useState();
-    let [selectedMeintenance, setSelectedMeintenance]= useState();
-    let [selectedNoWork, setSelectedNoWork]= useState();
-    let [selectedRemarks, setSelectedRemarks]= useState();
+    let [selectedRepeat, setSelectedRepeat]= useState(0);
+    let [selectedWarp, setSelectedWarp]= useState(0);
+    let [selectedWeft, setSelectedWeft]= useState(0);
+    let [selectedEficiency, setSelectedEficiency]= useState(0);
+    let [selectedOthers, setSelectedOthers]= useState(0);
+    let [selectedPower, setSelectedPower]= useState(0);
+    let [selectedMeintenance, setSelectedMeintenance]= useState(0);
+    let [selectedNoWork, setSelectedNoWork]= useState(0);
+    let [selectedRemarks, setSelectedRemarks]= useState("");
     let [startDate, setStartDate] = useState(new Date());
+    let [operators, setOperators]=useState([])
+    let [OperatorId, setOperatorId]=useState()
 
+
+    const style = <link rel='stylesheet' href ='https://cdn.jsdelivr.net/npm/semantic-ui@2.4.1/dist/semantic.min.css'/>
+
+ 
     // let plan
     // let Machines
     // let optionItems 
     const getPlanWiseMachine=(wpid)=>{
       console.log(wpid)
-      axios.get('http://localhost:3000/api/pflplannings/getPlanWiseMachineListForWoven?shed='+wpid).then((res)=>{
+      axios.get('http://'+api+'/api/pflplannings/getPlanWiseMachineListForWoven?shed='+wpid).then((res)=>{
          console.log(res) 
          setMachine([...res.data])
 
@@ -71,25 +79,27 @@ let data
 
 
     const JobRecieve=()=>{
-      let user= parseInt(sessionStorage.getItem('empId') )
-      axios.post('http://localhost:3000/api/pflplannings/UpdateWovenPlannsmaster',{PlanId:plans[plans.length-1].WplanID, UserId: user} ).then((res)=>{
+      let user= parseInt(localStorage.getItem('empId') )
+      axios.post('http://'+api+'/api/pflplannings/UpdateWovenPlannsmaster',{PlanId:plans[plans.length-1].WplanID, UserId: user} ).then((res)=>{
         setJobrecived(true)
       })
     }
 
   useEffect(() => {
-      //  axios.get('http://localhost:3000/api/pflplannings/getMaxWovenPlan').then((res)=>{
-      //    plans.push(res.data[0])
-        // axios.get('http://localhost:3000/api/pflplannings/getPlanWiseStatus?PlanId='+res.data[0].WplanID).then((res1)=>{
-        //   res1.data[0].StatusID==0? setJobrecived(false): setJobrecived(true)
-        // })
 
-        if(!userInfo) history.push('/userlogin')
-        axios.get('http://localhost:3000/api/MAchinemasters/wovenShedList').then((res2)=>{
+
+        if(!userInfo) history.push('/login')
+        axios.get('http://'+api+'/api/MAchinemasters/wovenShedList').then((res2)=>{
           shed.push(res2.data)
           })
+
+          axios.get('http://'+api+'/api/pflplannings/GetAllOperatorForWoven').then((res4)=>{
+           setOperators([...res4.data])
+            console.log(res4.data)
+          })
+          
       
-          axios.get('http://localhost:3000/api/icg-shifts').then((res3)=>{
+          axios.get('http://'+api+'/api/icg-shifts').then((res3)=>{
             res3.data.map((e)=>{
               if(e['SHIFT_NAME_ENG']=='C'|| e['SHIFT_NAME_ENG']=='A'||e['SHIFT_NAME_ENG']=='B')
               {
@@ -101,20 +111,6 @@ let data
     //  })
     },[]);
 
-
-    const MachineSelected=(e)=>{
-      var value =Machines.filter((machine)=>{
-        if(e.target.value==machine.MachineNo) return machine 
-      })
-      console.log(value[0].MachineID)
-
-      axios.get('http://localhost:3000/api/pflplannings/getPlanWiseStatus?machineId='+value[0].MachineID).then((res)=>{
-        console.log(plans[0].WplanID)
-        data=[...res.data]
-        setShowData(true)
-        setDropdown(false)
-      })
-    }
 
     const updateCount=()=>{
       console.log(count)
@@ -130,16 +126,18 @@ let data
 
       if(e.target.value=='Select')
       {
-        Swal.fire('Yikes!','Please select Shed', 'error')
+        setSelectedShed()
+        setSelectedMachine()
+        Swal.fire('Hey!','Please select Shed', 'error')
         return
       } 
       setSelectedShed(e.target.value)
 
-       axios.get('http://localhost:3000/api/pflplannings/getMaxWovenPlan?shedNo='+e.target.value).then((res)=>{
+       axios.get('http://'+api+'/api/pflplannings/getMaxWovenPlan?shedNo='+e.target.value).then((res)=>{
          setPlans([...res.data])
          setSelectedPlan(res.data[0].WplanID)
          
-        axios.get('http://localhost:3000/api/pflplannings/getPlanWiseStatus?PlanId='+res.data[0].WplanID).then((res1)=>{
+        axios.get('http://'+api+'/api/pflplannings/getPlanWiseStatus?PlanId='+res.data[0].WplanID).then((res1)=>{
           res1.data[0].StatusID==0? setJobrecived(false): setJobrecived(true)
         })
           getPlanWiseMachine(e.target.value)
@@ -148,18 +146,34 @@ let data
       })
     }
 
+    const getWorkOrder=(st)=>{
+
+       console.log(st.target.value)
+       axios.get('http://'+api+'/api/VWorkOrderMasters?filter[limit]=10&filter[order]=WorkOrderID desc&filter[where][WorkOrderNo][like]=%'+st.target.value+'%').then((res4)=>{
+          console.log(res4)
+         // setWorkOrder([...res4.data])
+         let orders =res4.data.map((wo)=>{
+           return{ label : wo.WorkOrderNo, value: wo.WorkOrderID}
+         })
+
+         setWorkOrder([...orders])
+        })
+             
+    }
+
     const selectWorkorder=(e)=>{
       
      setInfo(false)
      setWorkOrder([])
      if(e.target.value=='Machine')
      {
-      Swal.fire('Yikes!','Please select Machine', 'error')
+       setSelectedMachine()
+      Swal.fire('Hey!','Please select Machine', 'error')
         return
      }
      const mId=machine.find((m)=> e.target.value==m.MachineNo).MachineID
      setSelectedMachine(mId)
-     axios.get('http://localhost:3000/api/pflplannings/LoadMachinWiseWorkOrderForWoven?MachignId='+mId+'&PlanId='+plans[0].WplanID).then((res)=>{
+     axios.get('http://'+api+'/api/pflplannings/LoadMachinWiseWorkOrderForWoven?MachignId='+mId+'&PlanId='+plans[0].WplanID).then((res)=>{
       
       
      setWorkOrder([...res.data])
@@ -170,15 +184,9 @@ let data
 
     const getPickCutterByWorkOrder=(e)=>{
          setInfo(false)
-        if(e.target.value=='Work Order') {
-          Swal.fire('Yikes!','Please select Work Order', 'error')
-        return
-        }
-
-
-        const wid=workorder.find((w)=>w.WorkOrderNo===e.target.value).WorkOrderID
-        setSelectedWorkOrder(wid)
-        axios.get('http://localhost:3000/api/MachineMasters/mcefficiencywovenorderlist?Search='+e.target.value).then((res)=>{
+     
+        setSelectedWorkOrder(e.value)
+        axios.get('http://'+api+'/api/MachineMasters/mcefficiencywovenorderlist?Search='+e.label).then((res)=>{
           console.log(res)
           if(res.data.length>0){
             setInfo(true)
@@ -186,7 +194,7 @@ let data
             setCutter(res.data[0].Cutter)
             setSample(res.data[0].SampleName)
             setSampleId(res.data[0].SampleID)
-            setPlans([])
+            
           }
         })
 
@@ -196,21 +204,17 @@ let data
     const setShiftForWoven=(e)=>{  
       if(e.target.value=='Shift')
       {
-        Swal.fire('Yikes!','Please select a Shift', 'error')
+        Swal.fire('Hey!','Please select a Shift', 'error')
+        setSelectedShift()
+        return
       }
       setSelectedShift(e.target.value) }
-
-    // const setShedForWoven=(e)=>{ setSelectedShed(e.target.value)}
-    // const setPlanForWoven=(e)=>{ setSelectedPlan(e.target.value)}
-    // const setMachineForWoven=(e)=>{ setSelectedMachine(e.target.value)}
-    // const setWorkOrderForWoven=(e)=>{ setSelectedWorkOrder(e.target.value)}
-    // const setPickForWoven=(e)=>{ setSelectedPick(e.target.value)}
-    // const setCutterForWoven=(e)=>{ setSelectedCutter(e.target.value)}
 
     const setRepeatForWoven=(e)=>{ 
       console.log(e.target.value)
       setSelectedRepeat(e.target.value)
     }
+    const setOperatorIdForOven=(e)=>{ setOperatorId(e.EMP_ID) }
     const setWarpForWoven=(e)=>{ setSelectedWarp(e.target.value)} 
     const setWeftForWoven=(e)=>{ setSelectedWeft(e.target.value)} 
     const setEficiencyForWoven=(e)=>{ setSelectedEficiency(e.target.value)} 
@@ -222,19 +226,56 @@ let data
     const setPickForWoven=(e)=>{setPick(e.target.value)}
     const setCutterForWoven=(e)=>{ setCutter(e.target.value)}
 
+    const getselectedDate=(e)=>{ setStartDate(e) }
+
+
+    const ReSet=()=>{
+      setInfo(false)
+       setMachine([])
+       setWorkOrder([])
+       setOperatorId()
+       setSelectedShed(0)
+       setSelectedMachine(null)
+    }
 
 
     const SaveButton=()=>{
+
+      console.log(selectedShift)
+      if(!selectedShift){
+        Swal.fire('Hey!','Please Select Shift', 'error')
+        return
+      }
+
+      if(!OperatorId){
+        Swal.fire('fire!','Please Select Operator', 'error')
+        return
+      }
+
+      if(!selectedMachine)
+      {
+        Swal.fire('fire!','Please Select a Machine', 'error')
+        return
+      }
+      if(!selectedWorkOrder)
+      {
+        Swal.fire('fire!','Please Select a WorkOrder', 'error')
+        return
+      }
+
+
+      if(!selectedRemarks) selectedRemarks=""
+
      const data={
        "SHIFT_ID" : selectedShift,
        "PROD_DATE": format(startDate,'yyyy-MM-dd'),
        "MachineID": selectedMachine,
        "SHED_NAME": selectedShed,
-       "OPERATOR_ID": userInfo,
+       "OPERATOR_ID": OperatorId,
        "ORDER_ID": selectedWorkOrder,
        "SAMPLE_ID": sampleId,
-       "CUTTER": cutter,
-       "PICK": pick,
+       "CUTTER": parseInt(cutter),
+       "PICK": parseInt(pick),
        "REPEAT": parseInt(selectedRepeat),
        "PICK_OPENING": selectedPickOpening,
        "PICK_CLOSING": selectedPickCloseing,
@@ -250,12 +291,10 @@ let data
        "NOWORK": parseInt(selectedNoWork),
      }
       console.log(data)
-     axios.post('http://localhost:3000/api/MachineMasters/wovenProductionEffiInsert',data ).then((res)=>{
-      Swal.fire('Yikes!','Added Successfully', 'success')
-       setInfo(false)
-       setMachine([])
-       setWorkOrder([])
-
+     axios.post('http://'+api+'/api/MachineMasters/wovenProductionEffiInsert',data ).then((res)=>{
+      Swal.fire('hey!','Added Successfully', 'success')
+       
+        ReSet()
      })
 
 
@@ -265,13 +304,14 @@ let data
     return (
         <>
         
-       <div className="woven backgroundColour container "><h3 align="center">Woven </h3></div>
+       <div className="woven backgroundColour container "><h3 align="center">Woven Daily Entry</h3></div>
         {count==0? <div  class="d-flex justify-content-center">< button class="btn btn-outline-dark"  onClick={updateCount} >Start</button></div>: 
         <div className="app-background container">
+         
           <div>
           <table>
             <tr>
-              <td>  <select onChange={ShiftWiseMaxPlan} className="b select ">
+              <td>  <select onChange={ShiftWiseMaxPlan}  className="b select ">
                      <option>Select</option>{
                        shed[0].map((s)=> <option>{s.ShedName}</option> )
                       }</select></td>
@@ -290,13 +330,17 @@ let data
          
           </table>
           <br/>
-          <div><DatePicker className="c" selected={startDate} onChange={(date) => setStartDate(date)} /></div> <br/>
+          <div><DatePicker className="c" selected={startDate} onChange={getselectedDate} /></div> <br/>
           </div>
-          {plans.length>0 ?<div><h5 className="workOrder" align="center">{plans[plans.length-1].WplanNo}</h5></div> : <label></label>}
-          {jobrecived? <label></label>:<div className="wrapper "> <button className="btn btn-outline-secondary"  onClick={JobRecieve} >Recieve</button><br></br></div>}
-
+          {/* {plans.length>0 ?<div><h5 className="workOrder" align="center">{plans[plans.length-1].WplanNo}</h5></div> : <label></label>}
+          {jobrecived? <label></label>:<div className="wrapper "> <button className="btn btn-outline-secondary"  onClick={JobRecieve} >Recieve</button><br></br></div>} */}
+          
           <div>
-            {machine.length>0 && jobrecived? <div>
+            {machine.length>0 ? <div>    
+             <div className="c">
+                      <Select placeholder="Operator" onChange={setOperatorIdForOven} options={operators}/>
+                      <br/>
+             </div>
             
              <select onChange={selectWorkorder} className="c select">
               <option>Machine</option>{
@@ -309,12 +353,12 @@ let data
           </div>
 
           <div>
-            {workorder.length>0? <div>
-            
-             <select onChange={getPickCutterByWorkOrder} className="c select">
-              <option >Work Order</option>{
-                workorder.map((w)=> <option>{w.WorkOrderNo}</option> )
-               }</select>
+            {selectedMachine? <div>
+
+              <div className="c" onKeyUp={getWorkOrder}>
+                      <Select placeholder="Work Order" onChange={getPickCutterByWorkOrder} options={workorder}/>
+                      <br/>
+             </div>
                
              </div>   
           : <label></label>}
@@ -325,45 +369,70 @@ let data
 
              <table>
                <tr>
-                 <td><input type="number" value={pick} className="b textBox" onChange={setPickForWoven}/></td>
-                 <td className="a"></td>
-                 <td><input type="number" value={cutter} className="b textBox" onChange={setCutterForWoven}/></td>
+                 <td className="headerColor"><b>Pick</b></td>
+                 <td className="space"></td>
+                 <td><input type="number" value={pick} className="b alignTextBox " onChange={setPickForWoven}/></td>
+               </tr>
+               <tr>
+                 <td className="headerColor"><b>Cutter</b></td>
+                 <td className="space"></td>
+                 <td><input type="number" value={cutter} className="b alignTextBox" onChange={setCutterForWoven}/></td>
+               </tr>
+               <tr>
+                 <td className="headerColor"><b>Sample</b></td>
+                 <td className="space"></td>
+                 <td><input type="text" value={sample} readOnly className="b alignTextBox"/></td>
+               </tr>
+               <tr>
+                 <td className="headerColor"><b>Repeat</b></td>
+                 <td className="space"></td>
+                 <td><input type="number" onChange={setRepeatForWoven} className="b alignTextBox"/></td>
+               </tr>
+               <tr>
+                 <td className="headerColor"><b>Warp</b></td>
+                 <td className="space"></td>
+                 <td><input type="number" onChange={setWarpForWoven} className="b alignTextBox"/></td>
+               </tr>
+               <tr>
+                 <td className="headerColor"><b>Weft</b></td>
+                 <td className="space"></td>
+                 <td><input type="number"  className="b alignTextBox" onChange={setWeftForWoven}/></td>
+               </tr>
+               <tr>
+                 <td className="headerColor"><b>Eficiency</b></td>
+                 <td className="space"></td>
+                 <td><input type="number" className="b alignTextBox" onChange={setEficiencyForWoven}/></td>
+               </tr>
+               <tr>
+                 <td className="headerColor"><b>Others</b></td>
+                 <td className="space"></td>
+                 <td><input type="number" className="b alignTextBox" onChange={setOthersForWoven}/></td>
+               </tr>
+               <tr>
+                 <td className="headerColor"><b>Power</b></td>
+                 <td className="space"></td>
+                 <td><input type="number"className="b alignTextBox" onChange={setPowerForWoven}/></td>
+               </tr>
+               <tr>
+                 <td className="headerColor"><b>Meintenance</b></td>
+                 <td className="space"></td>
+                 <td><input type="number" className="b alignTextBox" onChange={setMeintenanceForWoven}/></td>
                </tr>
 
                <tr>
-                 <td> <input type="text" value={sample} className="b textBox"/></td>
-                 <td  className="a"></td>
-                 <td><input type="number" placeholder="Repeat" onChange={setRepeatForWoven} className="b textBox"/></td>
-               </tr>
-
-
-
-               <tr>
-                 <td><input type="number" placeholder="Warp" onChange={setWarpForWoven} className="b textBox"/></td>
-                 <td className="a"></td>
-                 <td><input type="number"  className="b textBox" placeholder="Weft" onChange={setWeftForWoven}/></td>
-               </tr>
-
-               <tr>
-                 <td> <input type="number" placeholder="Eficiency" className="b textBox" onChange={setEficiencyForWoven}/></td>
-                 <td  className="a"></td>
-                 <td><input type="number" placeholder="Others" className="b textBox" onChange={setOthersForWoven}/></td>
-               </tr>
-
-
-               <tr>
-                 <td><input type="number" placeholder="Power" className="b textBox" onChange={setPowerForWoven}/></td>
-                 <td className="a"></td>
-                 <td><input type="number" placeholder="meintenance" className="b textBox" onChange={setMeintenanceForWoven}/></td>
-               </tr>
-
-               <tr>
-                 <td> <input type="number" placeholder="No work" className="b textBox" onChange={setNoWorkForWoven}/></td>
-                 <td  className="a"></td>
-                 {/* <td><input type="text" placeholder="Remarks" className="b textBox" onChange={setRemarksForWoven}/></td> */}
+                 <td className="headerColor"><b>Power</b></td>
+                 <td className="space"></td>
+                 <td><input type="number"className="b alignTextBox" onChange={setPowerForWoven}/></td>
                </tr>
                <tr>
-                 <td colSpan="3" ><textarea placeholder="Remarks" className="c" onChange={setRemarksForWoven}>Remarks</textarea></td>
+                 <td className="headerColor"><b>No work</b></td>
+                 <td className="space"></td>
+                 <td><input type="number" className="b alignTextBox" onChange={setNoWorkForWoven}/></td>
+               </tr>
+               <tr>
+                 <td className="headerColor"><b>Remarks</b></td>
+                 <td className="space"></td>
+                 <td><textarea className="b alignTextBox" onChange={setRemarksForWoven}>Remarks</textarea></td>
                </tr>
 
                <tr>
