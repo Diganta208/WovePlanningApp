@@ -5,7 +5,7 @@ import UserLogin from "./component/UserLogin";
 import Dashboard from "./component/Dashboard";
 import WovenPlaningDashboard from "./component/WovenPlaningDashboard";
 import {render} from 'react-dom'
-import { BrowserRouter as Router, Route,Switch} from 'react-router-dom';
+import { BrowserRouter as Router, Route,Switch,Redirect} from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 import Home from './component/Home'
@@ -16,11 +16,12 @@ import { useHistory } from 'react-router';
 
 function App() { 
 
+  let [user, setUser]= useState(localStorage.getItem('empId'))
+
 
   return (
   <div >
-    <div> 
-    </div>
+
     <Router>
     <Switch>
       <Route path='/dashboard'>
@@ -28,7 +29,7 @@ function App() {
          </Route>
     </Switch>
     <Switch>
-      <Route path='/userlogin'>
+      <Route path='/login'>
         <UserLogin/>
          </Route>
     </Switch>
@@ -38,8 +39,6 @@ function App() {
          </Route>
     </Switch>
     </Router>
-    
-    
   </div>
     
 
